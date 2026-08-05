@@ -8,14 +8,15 @@
 // `outputs`. Nothing declares a pixel position, so adding a field can never
 // leave a handle pointing at the wrong row.
 
-import { Handle, Position } from 'reactflow';
+import { useMemo } from 'react';
+import { Handle, Position, useStore as useFlowStore } from 'reactflow';
 import { useStore } from '../store';
 import { FIELDS, BADGES } from './fields';
 
-const HANDLE = 'h-2.5 w-2.5 rounded-full border-2 border-accent bg-white';
-
-// Offsets a handle onto the card's border: 12px card padding + half the handle.
-const EDGE_OFFSET = -17;
+// Offsets a handle onto the card's border. Field rows are inset by the card's
+// 12px padding; the bare-handle wrappers already sit on the border.
+const ROW_OFFSET = -17;
+const EDGE_OFFSET = -5;
 
 const HelpDot = ({ text }) => (
   <span
@@ -36,6 +37,37 @@ export const BaseNode = ({ id, data, selected, config }) => {
   const updateNodeField = useStore((state) => state.updateNodeField);
   const set = (key) => (value) => updateNodeField(id, key, value);
 
+  // Which of this node's handles already have an edge. The selector returns a
+  // joined string rather than a Set so zustand's default equality check works
+  // and the node only re-renders when its own connections change.
+  const connectedKey = useStore((state) => {
+    const ids = [];
+
+    for (const edge of state.edges) {
+      if (edge.source === id && edge.sourceHandle) ids.push(edge.sourceHandle);
+      if (edge.target === id && edge.targetHandle) ids.push(edge.targetHandle);
+    }
+
+    return ids.sort().join('|');
+  });
+
+  const connected = useMemo(
+    () => new Set(connectedKey ? connectedKey.split('|') : []),
+    [connectedKey]
+  );
+
+  // 'source' while a connection is being dragged from a source handle,
+  // 'target' from a target handle, null otherwise. Drives which handles recede
+  // and which stand out — see the [data-connecting] rules in index.css.
+  const connecting = useFlowStore((state) => state.connectionHandleType);
+
+  // ponytail: connections are validated structurally only — any output may be
+  // wired to any input. Type checking wants a `type` on every handle plus
+  // isValidConnection here; the red/green handle states are already wired for
+  // it. See notes/bonus-ideas.md.
+  const handleClass = (handleId) =>
+    connected.has(handleId) ? 'node-handle node-handle--connected' : 'node-handle';
+
   const { fields = [], inputs = [], outputs = [] } = config;
 
   // Outputs render as a described list only when they have descriptions to
@@ -48,17 +80,29 @@ export const BaseNode = ({ id, data, selected, config }) => {
         selected ? 'border-2 border-accent' : 'border border-edge'
       }`}
       style={{ width: config.width ?? 240 }}
+      data-connecting={connecting ?? undefined}
     >
-      {/* Bare left handles, spread evenly down the card. */}
+      {/* Bare left handles, spread evenly down the card. Unlike field-bound
+          handles these have no row to name them, so each carries a label
+          outside the card. */}
       {inputs.map((input, index) => (
-        <Handle
+        <div
           key={input}
-          type="target"
-          position={Position.Left}
-          id={`${id}-${input}`}
-          className={HANDLE}
+          className="absolute left-0 -translate-y-1/2"
           style={{ top: `${((index + 1) / (inputs.length + 1)) * 100}%` }}
-        />
+        >
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] leading-none text-ink-muted">
+            {input}
+          </span>
+          <Handle
+            type="target"
+            position={Position.Left}
+            id={`${id}-${input}`}
+            className={handleClass(`${id}-${input}`)}
+            style={{ left: EDGE_OFFSET, top: 0 }}
+            title={input}
+          />
+        </div>
       ))}
 
       <header className="flex items-center gap-2 px-3 pt-3">
@@ -91,8 +135,9 @@ export const BaseNode = ({ id, data, selected, config }) => {
                     type="target"
                     position={Position.Left}
                     id={`${id}-${field.key}`}
-                    className={HANDLE}
-                    style={{ left: EDGE_OFFSET, top: '50%' }}
+                    className={handleClass(`${id}-${field.key}`)}
+                    style={{ left: ROW_OFFSET, top: '50%' }}
+                    title={field.label}
                   />
                 )}
 
@@ -132,8 +177,9 @@ export const BaseNode = ({ id, data, selected, config }) => {
                 type="source"
                 position={Position.Right}
                 id={`${id}-${output.key}`}
-                className={HANDLE}
-                style={{ right: EDGE_OFFSET, top: '50%' }}
+                className={handleClass(`${id}-${output.key}`)}
+                style={{ right: ROW_OFFSET, top: '50%' }}
+                title={output.key}
               />
             </div>
           ))}
@@ -145,8 +191,9 @@ export const BaseNode = ({ id, data, selected, config }) => {
             type="source"
             position={Position.Right}
             id={`${id}-${output.key}`}
-            className={HANDLE}
+            className={handleClass(`${id}-${output.key}`)}
             style={{ top: `${((index + 1) / (outputs.length + 1)) * 100}%` }}
+            title={output.key}
           />
         ))
       )}

@@ -15,3 +15,75 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Handles -------------------------------------------------------------------
+   reactflow's stylesheet is injected after this file, so every rule below
+   pairs .react-flow__handle with .node-handle to win on specificity rather
+   than resorting to !important.
+
+   Rules are ordered by ascending specificity so the later states — hovered,
+   then mid-connection, then valid — each override the one before it. */
+
+.react-flow__handle.node-handle {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: 2px solid theme('colors.accent.DEFAULT');
+  border-radius: 9999px;
+  cursor: crosshair;
+  transition: transform 120ms ease, background-color 120ms ease,
+    border-color 120ms ease, opacity 120ms ease;
+}
+
+/* Centre the dot on the card border. */
+.react-flow__handle-right.node-handle {
+  right: -5px;
+}
+
+/* Grows the grab area to ~22px without changing how the handle looks. A 10px
+   target is the single most common frustration in a node editor. */
+.react-flow__handle.node-handle::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+}
+
+/* Filled once something is wired to it, so a pipeline's connections are
+   readable without tracing every edge. */
+.react-flow__handle.node-handle--connected {
+  background: theme('colors.accent.DEFAULT');
+}
+
+.react-flow__handle.node-handle:hover {
+  transform: translate(0, -50%) scale(1.4);
+  background: theme('colors.accent.tint');
+  border-color: theme('colors.accent.strong');
+}
+
+/* While a connection is being dragged, the node root carries
+   data-connecting="source" | "target". Handles that cannot accept the
+   in-flight connection recede; the ones that can stand out. */
+[data-connecting='source'] .react-flow__handle.node-handle.source,
+[data-connecting='target'] .react-flow__handle.node-handle.target {
+  opacity: 0.25;
+}
+
+[data-connecting='source'] .react-flow__handle.node-handle.target,
+[data-connecting='target'] .react-flow__handle.node-handle.source {
+  transform: translate(0, -50%) scale(1.3);
+  border-color: theme('colors.accent.strong');
+}
+
+/* reactflow puts .connecting on the handle under the cursor and toggles
+   .valid on it, so the drop target answers before you release. */
+[data-connecting] .react-flow__handle.node-handle.connecting {
+  transform: translate(0, -50%) scale(1.5);
+  border-color: #dc2626;
+  background: #fee2e2;
+}
+
+[data-connecting] .react-flow__handle.node-handle.connecting.valid {
+  border-color: #16a34a;
+  background: #16a34a;
+}
