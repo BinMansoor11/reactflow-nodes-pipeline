@@ -11,6 +11,7 @@ import {
 export const useStore = create((set, get) => ({
     nodes: [],
     edges: [],
+    nodeIDs: {},
     getNodeID: (type) => {
         const newIDs = {...get().nodeIDs};
         if (newIDs[type] === undefined) {
@@ -40,15 +41,16 @@ export const useStore = create((set, get) => ({
         edges: addEdge({...connection, type: 'smoothstep', animated: true, markerEnd: {type: MarkerType.Arrow, height: '20px', width: '20px'}}, get().edges),
       });
     },
+    // Returns a new node object rather than mutating in place: reactflow
+    // memoizes node components on identity, so mutating data leaves the node
+    // rendering its previous value.
     updateNodeField: (nodeId, fieldName, fieldValue) => {
       set({
-        nodes: get().nodes.map((node) => {
-          if (node.id === nodeId) {
-            node.data = { ...node.data, [fieldName]: fieldValue };
-          }
-  
-          return node;
-        }),
+        nodes: get().nodes.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, [fieldName]: fieldValue } }
+            : node
+        ),
       });
     },
   }));
