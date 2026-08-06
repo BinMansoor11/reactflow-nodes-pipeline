@@ -6,15 +6,20 @@
 //
 //   type        reactflow node type, and the registry key
 //   category    derives the palette tab list
-//   fields      form controls; `input: true` gives the row a left handle
-//   inputs      left handles with no corresponding field
-//   outputs     right handles; add a `description` to render them as a list
+//   fields      form controls; `input: true` gives the row a left handle,
+//               whose type is derived from the field's kind
+//   inputs      left handles with no corresponding field: { key, type }
+//   outputs     right handles: { key, type }; add a `description` to render
+//               them as a list
+//
+// Handle types gate connections — see lib/types.js. `Any` connects to
+// anything; Number widens to Text but not the reverse.
 //
 // Two keys take a function of the node's data rather than a literal, which is
 // what lets a node vary at runtime without becoming a component:
 //
 //   width           number, or (data) => number
-//   dynamicInputs   (data) => string[]  — extra target handles
+//   dynamicInputs   (data) => [{ key, type }]  — extra target handles
 
 import { parseVariables, textNodeWidth } from '../lib/text';
 
@@ -36,7 +41,8 @@ export const definitions = [
       },
       { key: 'inputType', label: 'Type', kind: 'select', options: ['Text', 'File'], default: 'Text' },
     ],
-    outputs: [{ key: 'value' }],
+    // The user picks Text or File at runtime, so the output stays Any.
+    outputs: [{ key: 'value', type: 'Any' }],
   },
 
   {
@@ -46,7 +52,7 @@ export const definitions = [
     icon: 'OUT',
     description: 'Return a result from your workflow.',
     width: 240,
-    inputs: ['value'],
+    inputs: [{ key: 'value', type: 'Any' }],
     fields: [
       {
         key: 'outputName',
@@ -68,7 +74,7 @@ export const definitions = [
     icon: 'TXT',
     description: 'Compose text, with variables from upstream nodes.',
     width: (data) => textNodeWidth(data?.text),
-    dynamicInputs: (data) => parseVariables(data?.text),
+    dynamicInputs: (data) => parseVariables(data?.text).map((key) => ({ key, type: 'Text' })),
     fields: [
       {
         key: 'text',
@@ -80,7 +86,7 @@ export const definitions = [
         default: '{{input}}',
       },
     ],
-    outputs: [{ key: 'output' }],
+    outputs: [{ key: 'output', type: 'Text' }],
   },
 
   // Proves a node can have no I/O at all — the schema does not assume handles.
@@ -139,7 +145,7 @@ export const definitions = [
     icon: 'FLT',
     description: 'Keep only the values that match a condition.',
     width: 260,
-    inputs: ['input'],
+    inputs: [{ key: 'input', type: 'Any' }],
     fields: [
       {
         key: 'operator',
@@ -150,7 +156,7 @@ export const definitions = [
       },
       { key: 'value', label: 'Value', kind: 'text', placeholder: 'Compare against…' },
     ],
-    outputs: [{ key: 'output' }],
+    outputs: [{ key: 'output', type: 'Any' }],
   },
 
   // Proves branching: two source handles off one node.
@@ -161,7 +167,7 @@ export const definitions = [
     icon: 'IF',
     description: 'Route data down one of two paths.',
     width: 260,
-    inputs: ['input'],
+    inputs: [{ key: 'input', type: 'Any' }],
     fields: [
       {
         key: 'expression',
@@ -184,7 +190,10 @@ export const definitions = [
     icon: 'FX',
     description: 'Combine two numeric inputs.',
     width: 260,
-    inputs: ['a', 'b'],
+    inputs: [
+      { key: 'a', type: 'Number' },
+      { key: 'b', type: 'Number' },
+    ],
     fields: [
       {
         key: 'operation',
@@ -195,7 +204,7 @@ export const definitions = [
       },
       { key: 'precision', label: 'Decimal places', kind: 'number', min: 0, max: 10, default: 2 },
     ],
-    outputs: [{ key: 'result' }],
+    outputs: [{ key: 'result', type: 'Number' }],
   },
 
   {
@@ -205,7 +214,7 @@ export const definitions = [
     icon: 'API',
     description: 'Call an external HTTP endpoint.',
     width: 340,
-    inputs: ['trigger'],
+    inputs: [{ key: 'trigger', type: 'Any' }],
     fields: [
       {
         key: 'method',

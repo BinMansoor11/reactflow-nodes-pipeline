@@ -75,6 +75,15 @@ code {
   border-color: theme('colors.accent.strong');
 }
 
+/* A handle whose type cannot accept the connection being dragged. Same
+   specificity as the highlight rule above, so source order decides — this must
+   stay after it. */
+[data-connecting] .react-flow__handle.node-handle.node-handle--incompatible {
+  transform: translate(0, -50%) scale(1);
+  border-color: theme('colors.edge.DEFAULT');
+  opacity: 0.2;
+}
+
 /* reactflow puts .connecting on the handle under the cursor and toggles
    .valid on it, so the drop target answers before you release. */
 [data-connecting] .react-flow__handle.node-handle.connecting {

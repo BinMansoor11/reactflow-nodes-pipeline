@@ -108,3 +108,12 @@ export const BADGES = {
   select: 'Dropdown',
   number: 'Number',
 };
+
+// What a field-bound handle accepts, also derived from the kind. A select
+// produces a string, so it takes Text like any other text field.
+export const FIELD_TYPES = {
+  text: 'Text',
+  textarea: 'Text',
+  select: 'Text',
+  number: 'Number',
+};
