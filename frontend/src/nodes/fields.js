@@ -16,15 +16,39 @@ const TextField = ({ field, value, onChange }) => (
   />
 );
 
-const TextAreaField = ({ field, value, onChange }) => (
-  <textarea
-    className={`${control} resize-none leading-snug`}
-    rows={field.rows ?? 3}
-    value={value ?? ''}
-    placeholder={field.placeholder}
-    onChange={(e) => onChange(e.target.value)}
-  />
-);
+// An `autosize` textarea grows with its content. Rather than measuring
+// scrollHeight in a layout effect, the textarea and an invisible copy of its
+// text share one grid cell: the copy dictates the cell's size and the textarea
+// stretches to fill it. No refs, no resize observer, no reflow loop.
+const TextAreaField = ({ field, value, onChange }) => {
+  const textarea = (
+    <textarea
+      className={`${control} resize-none leading-snug ${
+        field.autosize ? 'col-start-1 row-start-1 overflow-hidden' : ''
+      }`}
+      rows={field.autosize ? 1 : field.rows ?? 3}
+      value={value ?? ''}
+      placeholder={field.placeholder}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+
+  if (!field.autosize) return textarea;
+
+  return (
+    <div className="grid">
+      {textarea}
+      {/* Same classes, so it wraps identically. The trailing space keeps a
+          trailing newline from collapsing. */}
+      <span
+        aria-hidden="true"
+        className={`${control} invisible col-start-1 row-start-1 whitespace-pre-wrap break-words leading-snug`}
+      >
+        {`${value ?? ''} `}
+      </span>
+    </div>
+  );
+};
 
 const SelectField = ({ field, value, onChange }) => (
   <select

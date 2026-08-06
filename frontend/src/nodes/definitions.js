@@ -9,6 +9,14 @@
 //   fields      form controls; `input: true` gives the row a left handle
 //   inputs      left handles with no corresponding field
 //   outputs     right handles; add a `description` to render them as a list
+//
+// Two keys take a function of the node's data rather than a literal, which is
+// what lets a node vary at runtime without becoming a component:
+//
+//   width           number, or (data) => number
+//   dynamicInputs   (data) => string[]  — extra target handles
+
+import { parseVariables, textNodeWidth } from '../lib/text';
 
 export const definitions = [
   {
@@ -50,18 +58,23 @@ export const definitions = [
     ],
   },
 
+  // Part 3 lives here, in config. The node resizes with its content and grows
+  // a target handle per {{variable}} — both expressed as functions of its own
+  // data, so it needs no component of its own.
   {
     type: 'text',
     label: 'Text',
     category: 'General',
     icon: 'TXT',
     description: 'Compose text, with variables from upstream nodes.',
-    width: 280,
+    width: (data) => textNodeWidth(data?.text),
+    dynamicInputs: (data) => parseVariables(data?.text),
     fields: [
       {
         key: 'text',
         label: 'Text',
         kind: 'textarea',
+        autosize: true,
         help: 'Type {{ variable }} to pull in an upstream value.',
         placeholder: 'e.g. Question: {{ input }}',
         default: '{{input}}',
