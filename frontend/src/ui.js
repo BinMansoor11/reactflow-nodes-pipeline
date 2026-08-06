@@ -75,8 +75,7 @@ export const PipelineUI = () => {
     }, []);
 
     return (
-        <>
-        <div ref={reactFlowWrapper} style={{width: '100vw', height: '70vh'}}>
+        <div ref={reactFlowWrapper} className="relative h-full w-full">
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -91,11 +90,29 @@ export const PipelineUI = () => {
                 snapGrid={[gridSize, gridSize]}
                 connectionLineType='smoothstep'
             >
-                <Background color="#aaa" gap={gridSize} />
-                <Controls />
-                <MiniMap />
+                <Background color="#E5E7EB" gap={gridSize} size={2} />
+                <Controls
+                    position="bottom-left"
+                    className="!shadow-node"
+                    showInteractive={false}
+                />
+                <MiniMap
+                    position="bottom-left"
+                    style={{ left: 56, width: 150, height: 100 }}
+                    className="!border !border-edge-muted !bg-white !shadow-node"
+                    maskColor="rgb(238 242 255 / 0.6)"
+                    nodeColor="#C7D2FE"
+                />
             </ReactFlow>
+
+            {nodes.length === 0 && (
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
+                    <p className="text-[15px] font-medium text-ink">Build a pipeline</p>
+                    <p className="text-[13px] text-ink-muted">
+                        Drag a node down from the palette, wire the handles together, then hit Submit.
+                    </p>
+                </div>
+            )}
         </div>
-        </>
     )
 }
