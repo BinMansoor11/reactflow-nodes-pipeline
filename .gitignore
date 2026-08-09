@@ -15,14 +15,6 @@ venv/
 .env
 .env.local
 
-# Working notes (architecture reports — prep material, not deliverables)
-notes/
-
-# Claude
-CLAUDE.md
-.claude/
-claude/
-
 # Playwright
 .playwright/
 playwright/

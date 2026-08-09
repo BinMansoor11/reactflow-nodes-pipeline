@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm start:*)",
+      "Bash(npm i:*)",
+      "Bash(npm install:*)",
+      "Bash(npx:*)",
+      "Bash(uvicorn:*)",
+      "Bash(python -m uvicorn:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)"
+    ]
+  }
+}
